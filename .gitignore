@@ -33,3 +33,4 @@ dist-ssr
 # Browser test artifacts
 test-results
 playwright-report
+_state.md
