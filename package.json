@@ -1,0 +1,37 @@
+{
+  "name": "memo-flick",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "oxlint",
+    "preview": "npm run build && vite preview",
+    "deploy": "npm run build && wrangler deploy",
+    "cf-typegen": "wrangler types",
+    "test": "vitest run --config vitest.config.ts",
+    "e2e": "playwright test",
+    "db:migrate:local": "wrangler d1 migrations apply memo-flick-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply memo-flick-db --remote"
+  },
+  "dependencies": {
+    "hono": "^4.13.13",
+    "motion": "^14.3.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.64.0",
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "oxlint": "^1.81.0",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.5",
+    "wrangler": "^4.151.1"
+  }
+}
