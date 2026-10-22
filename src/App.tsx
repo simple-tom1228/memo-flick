@@ -25,7 +25,6 @@ function App() {
   const [status, setStatus] = useState<Status>('inbox')
   const [user, setUser] = useState<User | null | undefined>(undefined)
   const userRef = useRef<User | null>(null)
-  const [composerText, setComposerText] = useState(() => textarea()?.value ?? '')
   const [ready, setReady] = useState(false)
   const [editing, setEditing] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
@@ -158,17 +157,16 @@ function App() {
     if (!text) { input.focus(); return }
     const now = nextTimestamp()
     update(current => [{ id: crypto.randomUUID(), text, status: 'inbox', archived: false, deleted: false, position: Math.min(0, ...current.map(task => task.position)) - 1, createdAt: now, updatedAt: now }, ...current])
-    input.value = ''; setComposerText(''); setStatus('inbox'); input.focus()
+    input.value = ''; setStatus('inbox'); input.focus()
     setBurst(true); setTimeout(() => setBurst(false), 550)
   }, [nextTimestamp, update])
   useEffect(() => {
     const input = textarea()
     const form = document.getElementById('composer-form') as HTMLFormElement
-    const onInput = () => setComposerText(input.value)
     const onKey = (event: KeyboardEvent) => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); add() } }
     const onSubmit = (event: SubmitEvent) => { event.preventDefault(); add() }
-    input.addEventListener('input', onInput); input.addEventListener('keydown', onKey); form.addEventListener('submit', onSubmit)
-    return () => { input.removeEventListener('input', onInput); input.removeEventListener('keydown', onKey); form.removeEventListener('submit', onSubmit) }
+    input.addEventListener('keydown', onKey); form.addEventListener('submit', onSubmit)
+    return () => { input.removeEventListener('keydown', onKey); form.removeEventListener('submit', onSubmit) }
   }, [add])
   const changeTask = (task: Task, patch: Partial<Task>) => update(current => current.map(item => item.id === task.id ? { ...item, ...patch, updatedAt: nextTimestamp() } : item))
   const move = (task: Task, direction: -1 | 1) => {
@@ -208,11 +206,17 @@ function App() {
     update(current => [...checked.map((text, index): Task => ({ id: crypto.randomUUID(), text, status: 'todo', archived: false, deleted: false, position: Math.min(0, ...current.map(task => task.position)) - checked.length + index, createdAt: now + index, updatedAt: now + index })), ...current])
     setSheet(false); setStatus('todo'); showToast(`${checked.length}件追加しました`)
   }
+  const organize = () => {
+    const input = textarea().value
+    const text = input.trim() ? input : tasks.filter(task => task.status === 'inbox' && !task.deleted && !task.archived).reduce((latest, task) => !latest || task.createdAt > latest.createdAt ? task : latest, null as Task | null)?.text
+    if (text) void suggest(text)
+    else showToast('整理するメモがありません')
+  }
   const visible = useMemo(() => user === undefined ? [] : tasks.filter(task => !task.deleted && !task.archived && task.status === status).sort((a, b) => a.position - b.position), [tasks, status, user])
   const counts = useMemo(() => Object.fromEntries(statuses.map(item => [item, user === undefined ? 0 : tasks.filter(task => !task.deleted && !task.archived && task.status === item).length])) as Record<Status, number>, [tasks, user])
   return <MotionConfig reducedMotion="user"><main className="app" aria-busy={!ready}>
     <div className="topbar">
-      <button className="ai-main" disabled={!user || !composerText.trim()} onClick={() => void suggest(textarea().value)}>✦ AIで整理</button>
+      <button className="ai-main" disabled={!user} onClick={organize}>✦ AIで整理</button>
       <div className="account">{user ? <><span className="initial" aria-hidden="true">{user.picture ? <img src={user.picture} alt="" referrerPolicy="no-referrer" /> : user.name.slice(0, 1)}</span><button onClick={() => void logout()}>ログアウト</button></> : <button onClick={() => void login()}>Googleでログイン</button>}</div>
     </div>
     {burst && <motion.span className="composer-burst" initial={{ y: -35, opacity: 1, scale: .6 }} animate={{ y: 125, opacity: 0, scale: 1.8 }} transition={{ duration: reduceMotion ? 0 : .55 }} />}

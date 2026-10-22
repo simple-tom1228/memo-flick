@@ -76,6 +76,16 @@ test('未ログインではAIが無効でログインだけ表示', async ({ pag
   await expect(page.getByRole('button', { name: 'ログアウト' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'AIで整理' }).first()).toBeDisabled()
 })
+test('入力欄が空でも最新のメモをAIで整理できる', async ({ page }) => {
+  const email = `ai-empty-${Date.now()}@example.test`
+  await testLogin(page, email)
+  await page.getByRole('button', { name: 'AIで整理' }).first().click()
+  await expect(page.getByRole('status')).toHaveText('整理するメモがありません')
+  await addMemo(page, '旅行の準備')
+  await expect(page.locator('#quick-memo')).toHaveValue('')
+  await page.getByRole('button', { name: 'AIで整理' }).first().click()
+  await expect(page.getByRole('dialog', { name: 'タスク候補' })).toBeVisible()
+})
 test('端末メモを同期し、別の画面とAI提案に反映', async ({ page, browser }) => {
   const email = `e2e-${Date.now()}@example.test`
   await page.goto('/')
